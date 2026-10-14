@@ -3,7 +3,7 @@ name: GTA 6 Daily Countdown
 
 on:
   schedule:
-    - cron: "0 12 * * *"
+    - cron: "17 12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,7 @@ jobs:
   countdown:
     runs-on: ubuntu-latest
     steps:
-      - name: Update countdown
+      - name: Post daily countdown
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
@@ -21,21 +21,25 @@ jobs:
           import os, json, urllib.request
           from datetime import datetime, timezone
 
-          release = datetime(2026, 11, 19, tzinfo=timezone.utc)
-          now = datetime.now(timezone.utc)
-          days = max(0, (release.date() - now.date()).days)
+          release = datetime(2026, 11, 19).date()
+          today = datetime.now(timezone.utc).date()
+          days = max(0, (release - today).days)
 
-          message = {
-              "content": f"🎮 **GTA 6 COUNTDOWN**\n⏳ **{days} days remaining!**\n📅 November 19, 2026"
-          }
+          content = (
+              f"🎮 GTA 6 COUNTDOWN\n"
+              f"⏳ **{days} days remaining!**\n"
+              f"📅 November 19, 2026"
+          )
 
-          req = urllib.request.Request(
-              os.environ["DISCORD_WEBHOOK"],
-              data=json.dumps(message).encode(),
+          url = os.environ["DISCORD_WEBHOOK"] + "?wait=true"
+          data = json.dumps({"content": content}).encode()
+          request = urllib.request.Request(
+              url, data=data,
               headers={"Content-Type": "application/json"},
               method="POST"
           )
-          with urllib.request.urlopen(req) as response:
-              print("Discord message posted:", response.status)
+
+          with urllib.request.urlopen(request) as response:
+              print("Countdown posted:", response.status)
           PY
           
